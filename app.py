@@ -241,12 +241,12 @@ def build_video_pipeline(request_id: str, course: str, persona: str) -> str:
         f.write(MANIM_TEMPLATE)
 
     cmd = [
-        "manim", "-qm", manim_script_path, "TeachingScene",
-        "--media_dir", OUTPUT_DIR
-    ]
+    "manim", "-ql", manim_script_path, "TeachingScene",
+    "--media_dir", OUTPUT_DIR
+]
     subprocess.run(cmd, check=True)
 
-    generated_video = os.path.join(OUTPUT_DIR, "videos", "manim_generator", "720p30", "TeachingScene.mp4")
+    generated_video = os.path.join(OUTPUT_DIR, "videos", "manim_generator", "480p15", "TeachingScene.mp4")
     output_filename = f"{request_id}.mp4"
     final_dest = os.path.join(OUTPUT_DIR, output_filename)
     
