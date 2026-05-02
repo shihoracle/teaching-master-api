@@ -3,6 +3,7 @@ import json
 import textwrap
 import subprocess
 import shutil
+import requests
 from typing import Optional, List, Union
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -10,10 +11,6 @@ from pydantic import BaseModel
 import uvicorn
 from gtts import gTTS
 from mutagen.mp3 import MP3
-
-# 引入新版 Gemini SDK
-from google import genai
-from google.genai import types
 
 app = FastAPI(title="Teaching Monster AI Agent")
 
@@ -32,7 +29,7 @@ class GenerationResponse(BaseModel):
     supplementary_url: Optional[Union[List[str], str]] = None
 
 def generate_teaching_script(course: str, persona: str) -> list:
-    """呼叫新版 Gemini SDK 動態生成教學腳本"""
+    """捨棄 SDK，直接使用 REST API 呼叫 Gemini"""
     api_key = os.getenv("GEMINI_API_KEY")
     
     fallback_script = [
@@ -50,9 +47,6 @@ def generate_teaching_script(course: str, persona: str) -> list:
         return fallback_script
 
     try:
-        # 初始化新版 Client
-        client = genai.Client(api_key=api_key)
-        
         prompt = f"""
         You are an AI teaching assistant.
         Create a short, engaging video script explaining the following topic: "{course}".
@@ -71,27 +65,32 @@ def generate_teaching_script(course: str, persona: str) -> list:
         Limit the entire script to a maximum of 2 scenes, with 3 short sentences per scene to keep the rendering time low.
         """
 
-        # 使用新版 SDK 呼叫方式，並設定 JSON 格式輸出
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.7,
-            )
-        )
-        
-        result_text = response.text.strip()
+        # 原生 REST API 呼叫，強制使用最新穩定版模型
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        headers = {'Content-Type': 'application/json'}
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "temperature": 0.7
+            }
+        }
+
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response_data = response.json()
+
+        if "error" in response_data:
+            print(f"Gemini API Error: {response_data['error']}")
+            return fallback_script
+
+        # 解析回傳的 JSON 結構
+        result_text = response_data['candidates'][0]['content']['parts'][0]['text'].strip()
         script_data = json.loads(result_text)
         return script_data
 
     except Exception as e:
-        print(f"Gemini API Error: {str(e)}")
+        print(f"API Request Failed: {str(e)}")
         return fallback_script
-
-# ... (下方保留原有的 MANIM_TEMPLATE, build_video_pipeline 與 api_generate 程式碼) ...
-
-
 
 # 通用型 Manim 動畫模板
 MANIM_TEMPLATE = r"""
