@@ -1,7 +1,10 @@
 FROM python:3.10-slim
 
-# 安裝系統依賴項目，此處包含您指定的 LaTeX 與字型相關套件
+# 加入 build-essential, pkg-config 與 python3-dev 以支援套件編譯
 RUN apt-get update -qq && apt-get install -y \
+    build-essential \
+    pkg-config \
+    python3-dev \
     libcairo2-dev \
     libpango1.0-dev \
     texlive \
