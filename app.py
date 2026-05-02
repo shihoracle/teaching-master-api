@@ -73,7 +73,7 @@ def generate_teaching_script(course: str, persona: str) -> list:
 
         # 使用新版 SDK 呼叫方式，並設定 JSON 格式輸出
         response = client.models.generate_content(
-            model='gemini-2.0-flash',  # 將此處更新為最新支援的模型版本
+            model='gemini-1.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -88,6 +88,8 @@ def generate_teaching_script(course: str, persona: str) -> list:
     except Exception as e:
         print(f"Gemini API Error: {str(e)}")
         return fallback_script
+
+# ... (下方保留原有的 MANIM_TEMPLATE, build_video_pipeline 與 api_generate 程式碼) ...
 
 
 
