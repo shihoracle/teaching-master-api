@@ -5,4 +5,4 @@ gtts
 requests
 manim
 mutagen
-google-generativeai
+google-genai

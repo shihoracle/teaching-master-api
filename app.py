@@ -10,7 +10,10 @@ from pydantic import BaseModel
 import uvicorn
 from gtts import gTTS
 from mutagen.mp3 import MP3
-import google.generativeai as genai
+
+# 引入新版 Gemini SDK
+from google import genai
+from google.genai import types
 
 app = FastAPI(title="Teaching Monster AI Agent")
 
@@ -29,8 +32,7 @@ class GenerationResponse(BaseModel):
     supplementary_url: Optional[Union[List[str], str]] = None
 
 def generate_teaching_script(course: str, persona: str) -> list:
-    """呼叫 Gemini 動態生成教學腳本"""
-    # 讀取環境變數中的 API Key
+    """呼叫新版 Gemini SDK 動態生成教學腳本"""
     api_key = os.getenv("GEMINI_API_KEY")
     
     fallback_script = [
@@ -48,14 +50,8 @@ def generate_teaching_script(course: str, persona: str) -> list:
         return fallback_script
 
     try:
-        # 設定 Gemini API 金鑰
-        genai.configure(api_key=api_key)
-        
-        # 選擇 gemini-1.5-flash 模型，速度最快且支援強制 JSON 輸出
-        model = genai.GenerativeModel(
-            'gemini-1.5-flash',
-            generation_config={"response_mime_type": "application/json"}
-        )
+        # 初始化新版 Client
+        client = genai.Client(api_key=api_key)
         
         prompt = f"""
         You are an AI teaching assistant.
@@ -75,15 +71,25 @@ def generate_teaching_script(course: str, persona: str) -> list:
         Limit the entire script to a maximum of 2 scenes, with 3 short sentences per scene to keep the rendering time low.
         """
 
-        response = model.generate_content(prompt)
-        result_text = response.text.strip()
+        # 使用新版 SDK 呼叫方式，並設定 JSON 格式輸出
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.7,
+            )
+        )
         
+        result_text = response.text.strip()
         script_data = json.loads(result_text)
         return script_data
 
     except Exception as e:
         print(f"Gemini API Error: {str(e)}")
         return fallback_script
+
+
 
 # 通用型 Manim 動畫模板
 MANIM_TEMPLATE = r"""
