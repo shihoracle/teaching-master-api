@@ -65,8 +65,8 @@ def generate_teaching_script(course: str, persona: str) -> list:
         Limit the entire script to a maximum of 2 scenes, with 3 short sentences per scene to keep the rendering time low.
         """
 
-        # 原生 REST API 呼叫，強制使用最新穩定版模型
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        # 已替換為 1.5-flash，解決 limit: 0 的額度問題
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         headers = {'Content-Type': 'application/json'}
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
