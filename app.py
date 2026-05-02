@@ -29,7 +29,6 @@ class GenerationResponse(BaseModel):
     supplementary_url: Optional[Union[List[str], str]] = None
 
 def generate_teaching_script(course: str, persona: str) -> list:
-    """捨棄 SDK，直接使用 REST API 呼叫 Gemini"""
     api_key = os.getenv("GEMINI_API_KEY")
     
     fallback_script = [
@@ -65,8 +64,8 @@ def generate_teaching_script(course: str, persona: str) -> list:
         Limit the entire script to a maximum of 2 scenes, with 3 short sentences per scene to keep the rendering time low.
         """
 
-        # 已替換為 gemini-1.5-flash-latest，解決 404 與 limit: 0 的問題
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
+        # 使用最標準且穩定的模型名稱
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         headers = {'Content-Type': 'application/json'}
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
@@ -83,7 +82,6 @@ def generate_teaching_script(course: str, persona: str) -> list:
             print(f"Gemini API Error: {response_data['error']}")
             return fallback_script
 
-        # 解析回傳的 JSON 結構
         result_text = response_data['candidates'][0]['content']['parts'][0]['text'].strip()
         script_data = json.loads(result_text)
         return script_data
@@ -92,7 +90,6 @@ def generate_teaching_script(course: str, persona: str) -> list:
         print(f"API Request Failed: {str(e)}")
         return fallback_script
 
-# 通用型 Manim 動畫模板
 MANIM_TEMPLATE = r"""
 from manim import *
 import json
